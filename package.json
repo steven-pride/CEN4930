@@ -1,0 +1,24 @@
+{
+  "name": "cen4930",
+  "version": "1.0.0",
+  "description": "",
+  "scripts": {
+    "probe": "node src/scripts/probeHuggingFaceApi.js",
+    "ingest": "node src/scripts/runLocalIngestion.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/steven-pride/CEN4930.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/steven-pride/CEN4930/issues"
+  },
+  "homepage": "https://github.com/steven-pride/CEN4930#readme",
+  "dependencies": {
+    "axios": "^1.20.0",
+    "dotenv": "^17.4.2",
+    "mssql": "^12.7.2"
+  }
+}
