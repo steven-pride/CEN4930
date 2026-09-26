@@ -20,11 +20,7 @@ const config = {
         baseUrl: get('HF_BASE_URL', 'https://router.huggingface.co'),
     },
     db: {
-        server: get('DB_SERVER'),
-        database: get('DB_NAME'),
-        user: get('DB_USER'),
-        password: get('DB_PASSWORD'),
-        port: parseInt(get('DB_PORT', '1433'), 10),
+        connectionString: get('AZURE_SQL_CONNECTION_STRING')
     },
 };
 

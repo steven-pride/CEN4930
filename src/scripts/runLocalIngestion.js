@@ -2,6 +2,7 @@
 
 const { HuggingFaceClient } = require('../api/huggingfaceClient');
 const modelsConfig = require('../config/models.config.json');
+const { syncModelsAndProviders, saveMeasurements, closePool } = require('../db/dataAccessLayer');
 
 // Safely convert value to finite number or null, preserving 0
 function parseNumber(value) {
@@ -86,7 +87,7 @@ async function run() {
     const options = parseArgs();
     const configuredModels = modelsConfig.models || [];
     const configuredProviders = modelsConfig.providers || [];
-    const targetProviderIds = configuredProviders.map((p) => p.id);
+    const targetProviderIds = new Set(configuredProviders.map((p) => p.id));
 
     console.log(`Starting ingestion (${options.dryRun ? 'DRY RUN' : 'LIVE DB'}) for ${configuredModels.length} model(s)...`);
 
@@ -110,6 +111,10 @@ async function run() {
     let savedCount = 0;
     if (!options.dryRun && allMeasurements.length > 0) {
         console.log('\nSaving to database...');
+        console.log('Syncing configured models and providers');
+        await syncModelsAndProviders(configuredModels, configuredProviders);
+        console.log('Adding measurements snapshot');
+        savedCount = await saveMeasurements(allMeasurements);
         console.log(`Successfully saved ${savedCount} measurement rows to database.`);
     }
 
@@ -137,6 +142,10 @@ async function main() {
     } catch (error) {
         console.error('Fatal ingestion error:', error.message);
         process.exitCode = 1;
+    }
+    finally {
+        // Ensure that SQL Connection is closed
+        await closePool();
     }
 }
 
