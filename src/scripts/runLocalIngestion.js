@@ -133,6 +133,13 @@ async function run(options = {}) {
     if (errors.length > 0) {
         process.exitCode = 1;
     }
+
+    return {
+        modelsProcessed: configuredModels.length - errors.length,
+        totalModels: configuredModels.length,
+        recordsInserted: savedCount,
+        errors: `${errors}`
+    }
 }
 
 async function main() {
