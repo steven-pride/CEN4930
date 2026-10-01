@@ -6,3 +6,7 @@ async function runIngestion(options = {}, context = null) {
 
     await run(options);
 }
+
+module.exports = {
+    runIngestion
+};
