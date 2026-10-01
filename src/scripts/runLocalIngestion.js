@@ -83,8 +83,7 @@ function parseArgs() {
     };
 }
 
-async function run() {
-    const options = parseArgs();
+async function run(options = {}) {
     const configuredModels = modelsConfig.models || [];
     const configuredProviders = modelsConfig.providers || [];
     const targetProviderIds = new Set(configuredProviders.map((p) => p.id));
@@ -138,7 +137,8 @@ async function run() {
 
 async function main() {
     try {
-        await run();
+        const options = parseArgs();
+        await run(options);
     } catch (error) {
         console.error('Fatal ingestion error:', error.message);
         process.exitCode = 1;
@@ -154,5 +154,6 @@ if (require.main === module) {
 }
 
 module.exports = {
-    extractMeasurements
+    extractMeasurements,
+    run
 };
