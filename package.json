@@ -2,7 +2,9 @@
   "name": "cen4930",
   "version": "1.0.0",
   "description": "",
+  "main": "src/functions/*.js",
   "scripts": {
+    "start": "func start",
     "probe": "node src/scripts/probeHuggingFaceApi.js",
     "ingest": "node src/scripts/runLocalIngestion.js"
   },
