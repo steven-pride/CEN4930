@@ -1,0 +1,10 @@
+{
+  "IsEncrypted": false,
+  "Values": {
+    "AzureWebJobsStorage": "UseDevelopmentStorage=true",
+    "FUNCTIONS_WORKER_RUNTIME": "node",
+    "HF_TOKEN": "",
+    "AZURE_SQL_CONNECTION_STRING": "",
+    "TIMER_SCHEDULE": "0 0 0 * * *"
+  }
+}
