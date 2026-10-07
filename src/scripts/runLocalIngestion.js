@@ -9,7 +9,8 @@ function parseNumber(value) {
     if (value === null || value === undefined || value === '') {
         return null;
     }
-    return Number(value);
+    const num = Number(value);
+    return Number.isFinite(num) ? num : null;
 }
 
 // Convert price to USD per 1 Million tokens
@@ -18,6 +19,37 @@ function parsePricePerMillion(price, unit = '1M') {
     if (num === null) return null;
     if (unit === '1K' || unit === '1k' || unit === 'kilo') return num * 1000;
     if (unit === '1' || unit === 'token') return num * 1000000;
+    return num;
+}
+
+// Metric sanity checks: validate ranges and filter outliers to null while preserving genuine 0
+function validateLatency(value, modelId, providerId) {
+    const num = parseNumber(value);
+    if (num === null) return null;
+    if (num < 0 || num >= 120000) {
+        console.warn(`[Outlier Filter] Latency ${num}ms out of range [0, 120000) for ${modelId} (${providerId}). Resetting to NULL.`);
+        return null;
+    }
+    return Math.round(num * 100) / 100;
+}
+
+function validateThroughput(value, modelId, providerId) {
+    const num = parseNumber(value);
+    if (num === null) return null;
+    if (num < 0 || num >= 2000) {
+        console.warn(`[Outlier Filter] Throughput ${num} TPS out of range [0, 2000) for ${modelId} (${providerId}). Resetting to NULL.`);
+        return null;
+    }
+    return Math.round(num * 100) / 100;
+}
+
+function validatePrice(value, modelId, providerId, type = 'price') {
+    const num = parsePricePerMillion(value);
+    if (num === null) return null;
+    if (num < 0 || num >= 100) {
+        console.warn(`[Outlier Filter] ${type} $${num}/1M tokens out of range [0, 100) for ${modelId} (${providerId}). Resetting to NULL.`);
+        return null;
+    }
     return num;
 }
 
@@ -46,18 +78,18 @@ function extractMeasurements(modelId, rawPayload, allowedProviders) {
                 console.warn(`Provider "${providerId}" for "${modelId}" reported non-live status: ${item.status}`);
             }
 
-            // Extract latency, throughput, and pricing values
-            const latency = parseNumber(item.first_token_latency_ms ?? item.latency?.firstResponseLatencyMs ?? item.latency);
-            const throughput = parseNumber(item.throughput?.throughputTPS ?? item.throughput);
+            // Extract latency, throughput, and pricing with sanity checks
+            const rawLatency = item.first_token_latency_ms ?? item.latency?.firstResponseLatencyMs ?? item.latency;
+            const rawThroughput = item.throughput?.throughputTPS ?? item.throughput;
             const pricing = item.pricing || {};
 
             measurements.push({
                 modelId,
                 providerId,
-                firstResponseLatencyMs: latency !== null ? Math.round(latency * 100) / 100 : null,
-                throughputTPS: throughput !== null ? Math.round(throughput * 100) / 100 : null,
-                promptCostPerMillion: parsePricePerMillion(pricing.input ?? pricing.promptCostPerMillion ?? pricing.prompt),
-                completionCostPerMillion: parsePricePerMillion(pricing.output ?? pricing.completionCostPerMillion ?? pricing.completion),
+                firstResponseLatencyMs: validateLatency(rawLatency, modelId, providerId),
+                throughputTPS: validateThroughput(rawThroughput, modelId, providerId),
+                promptCostPerMillion: validatePrice(pricing.input ?? pricing.promptCostPerMillion ?? pricing.prompt, modelId, providerId, 'Prompt cost'),
+                completionCostPerMillion: validatePrice(pricing.output ?? pricing.completionCostPerMillion ?? pricing.completion, modelId, providerId, 'Completion cost'),
                 collectedAt,
             });
         }
@@ -83,7 +115,7 @@ function parseArgs() {
     };
 }
 
-async function run(options = {}) {
+async function run(options = {}, context = null) {
     const configuredModels = modelsConfig.models || [];
     const configuredProviders = modelsConfig.providers || [];
     const targetProviderIds = new Set(configuredProviders.map((p) => p.id));
@@ -94,16 +126,30 @@ async function run(options = {}) {
     const errors = [];
     const client = new HuggingFaceClient();
 
-    for (const model of configuredModels) {
-        try {
-            console.log(`Fetching data for model: ${model.id}`);
-            const rawPayload = await client.fetchModelData(model.id);
-            const measurements = extractMeasurements(model.id, rawPayload, targetProviderIds);
-            console.log(`  Parsed ${measurements.length} provider snapshot(s) for ${model.id}`);
-            allMeasurements.push(...measurements);
-        } catch (err) {
-            console.error(`  Failed to fetch ${model.id}: ${err.message}`);
-            errors.push({ modelId: model.id, error: err.message });
+    // Query Hugging Face API with 3-way throttled concurrency
+    const BATCH_SIZE = 3;
+    for (let i = 0; i < configuredModels.length; i += BATCH_SIZE) {
+        const batch = configuredModels.slice(i, i + BATCH_SIZE);
+        const batchResults = await Promise.all(
+            batch.map(async (model) => {
+                try {
+                    console.log(`Fetching data for model: ${model.id}`);
+                    const rawPayload = await client.fetchModelData(model.id);
+                    const measurements = extractMeasurements(model.id, rawPayload, targetProviderIds);
+                    console.log(`  Parsed ${measurements.length} provider snapshot(s) for ${model.id}`);
+                    return { measurements, error: null };
+                } catch (err) {
+                    console.error(`  Failed to fetch ${model.id}: ${err.message}`);
+                    return { measurements: [], error: { modelId: model.id, error: err.message } };
+                }
+            })
+        );
+
+        for (const res of batchResults) {
+            allMeasurements.push(...res.measurements);
+            if (res.error) {
+                errors.push(res.error);
+            }
         }
     }
 
