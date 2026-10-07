@@ -3,7 +3,9 @@
   "providers": [
     { "id": "novita", "name": "Novita AI" },
     { "id": "baseten", "name": "Baseten" },
-    { "id": "deepinfra", "name": "DeepInfra" }
+    { "id": "deepinfra", "name": "DeepInfra" },
+    { "id": "together", "name": "Together AI" },
+    { "id": "fireworks-ai", "name": "Fireworks AI" }
   ],
   "models": [
     { "id": "deepseek-ai/DeepSeek-V4.1-Flash", "displayName": "DeepSeek V4.1 Flash" },
@@ -15,6 +17,11 @@
     { "id": "zai-org/GLM-5.2", "displayName": "GLM 5.2" },
     { "id": "deepseek-ai/DeepSeek-V4-Pro-0813", "displayName": "DeepSeek V4 Pro 0813" },
     { "id": "moonshotai/Kimi-K2.7-Code", "displayName": "Kimi K2.7 Code" },
-    { "id": "moonshotai/Kimi-K2.6", "displayName": "Kimi K2.6" }
+    { "id": "moonshotai/Kimi-K2.6", "displayName": "Kimi K2.6" },
+    { "id": "openai/gpt-oss-20b", "displayName": "GPT-OSS 20B" },
+    { "id": "meta-llama/Llama-3.3-70B-Instruct", "displayName": "Llama 3.3 70B Instruct" },
+    { "id": "meta-llama/Llama-3.1-8B-Instruct", "displayName": "Llama 3.1 8B Instruct" },
+    { "id": "moonshotai/Kimi-K3", "displayName": "Kimi K3" },
+    { "id": "MiniMaxAI/MiniMax-M3", "displayName": "MiniMax M3" }
   ]
 }
