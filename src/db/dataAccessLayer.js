@@ -1,4 +1,5 @@
 const { sql, getPool } = require('./dbContext');
+const { config } = require('../config/env');
 
 // Sync configured models and providers into reference tables
 async function syncModelsAndProviders(models = [], providers = []) {
@@ -102,6 +103,25 @@ async function saveMeasurements(measurements = [], maxRetries = 3) {
     }
 }
 
+// Delete measurements older than the configured retention period (default 14 days)
+async function cleanOldMeasurements(retentionDays = config.db.retentionDays || 14) {
+    if (!retentionDays || retentionDays <= 0) {
+        return 0;
+    }
+
+    const pool = await getPool();
+    const request = pool.request();
+    request.input('RetentionDays', sql.Int, retentionDays);
+
+    const result = await request.query(`
+        DELETE FROM dbo.Measurements
+        WHERE CollectedAt < DATEADD(day, -@RetentionDays, SYSDATETIMEOFFSET());
+    `);
+
+    const deletedCount = result.rowsAffected ? result.rowsAffected.reduce((a, b) => a + b, 0) : 0;
+    return deletedCount;
+}
+
 async function closePool() {
     const pool = await getPool();
     await pool.close();
@@ -110,5 +130,6 @@ async function closePool() {
 module.exports = {
     syncModelsAndProviders,
     saveMeasurements,
+    cleanOldMeasurements,
     closePool,
 };

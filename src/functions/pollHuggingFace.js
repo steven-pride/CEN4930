@@ -13,7 +13,7 @@ app.timer('pollHuggingFaceTimer', {
 
         try {
             const result = await runIngestion({}, context);
-            context.log(`Ingestion completed: Processed ${result.modelsProcessed}/${result.totalModels} models, ${result.recordsInserted} records inserted.`);
+            context.log(`Ingestion completed: Processed ${result.modelsProcessed}/${result.totalModels} models, ${result.recordsInserted} records inserted, ${result.recordsPruned || 0} records pruned.`);
         } catch (error) {
             context.error('Critical failure during scheduled ingestion:', error);
             throw error;

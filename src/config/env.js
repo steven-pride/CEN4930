@@ -20,7 +20,8 @@ const config = {
         baseUrl: get('HF_BASE_URL', 'https://router.huggingface.co'),
     },
     db: {
-        connectionString: get('AZURE_SQL_CONNECTION_STRING')
+        connectionString: get('AZURE_SQL_CONNECTION_STRING'),
+        retentionDays: parseInt(get('DATA_RETENTION_DAYS', '14'), 10) || 14,
     },
 };
 
