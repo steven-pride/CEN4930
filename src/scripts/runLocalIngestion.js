@@ -2,7 +2,7 @@
 
 const { HuggingFaceClient } = require('../api/huggingfaceClient');
 const modelsConfig = require('../config/models.config.json');
-const { syncModelsAndProviders, saveMeasurements, closePool } = require('../db/dataAccessLayer');
+const { syncModelsAndProviders, saveMeasurements, cleanOldMeasurements, closePool } = require('../db/dataAccessLayer');
 
 // Safely convert value to finite number or null, preserving 0
 function parseNumber(value) {
@@ -154,6 +154,7 @@ async function run(options = {}, context = null) {
     }
 
     let savedCount = 0;
+    let prunedCount = 0;
     if (!options.dryRun && allMeasurements.length > 0) {
         console.log('\nSaving to database...');
         console.log('Syncing configured models and providers');
@@ -161,6 +162,10 @@ async function run(options = {}, context = null) {
         console.log('Adding measurements snapshot');
         savedCount = await saveMeasurements(allMeasurements);
         console.log(`Successfully saved ${savedCount} measurement rows to database.`);
+
+        console.log('Cleaning up old measurements...');
+        prunedCount = await cleanOldMeasurements();
+        console.log(`Successfully cleaned up ${prunedCount} old measurement records.`);
     }
 
     console.log('\n--- Ingestion Run Summary ---');
@@ -168,6 +173,7 @@ async function run(options = {}, context = null) {
     console.log(`Total snapshots generated: ${allMeasurements.length}`);
     if (!options.dryRun) {
         console.log(`Total rows inserted to DB: ${savedCount}`);
+        console.log(`Total rows pruned from DB: ${prunedCount}`);
     }
     console.log(`Errors: ${errors.length}`);
 
@@ -184,8 +190,9 @@ async function run(options = {}, context = null) {
         modelsProcessed: configuredModels.length - errors.length,
         totalModels: configuredModels.length,
         recordsInserted: savedCount,
+        recordsPruned: prunedCount,
         errors: `${errors}`
-    }
+    };
 }
 
 async function main() {
