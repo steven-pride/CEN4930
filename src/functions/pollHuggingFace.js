@@ -3,7 +3,7 @@ const { runIngestion } = require('../scripts/runOnlineIngestion');
 
 // Azure Functions Timer Trigger to poll Hugging Face model metrics hourly
 app.timer('pollHuggingFaceTimer', {
-    schedule: process.env.TIMER_SCHEDULE || '0 0 * * * *',
+    schedule: process.env.TIMER_SCHEDULE || '0 */8 * * *',
     handler: async (myTimer, context) => {
         context.log('Azure Function Timer Trigger executed at:', new Date().toISOString());
 
