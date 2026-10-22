@@ -1,0 +1,67 @@
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    background-color: #f8f9fa;
+    color: #212529;
+    padding: 20px;
+}
+
+.dashboard-header {
+    text-align: center;
+    margin-bottom: 24px;
+}
+
+.dashboard-header h1 {
+    font-size: 1.8rem;
+    margin-bottom: 8px;
+    color: #1a1a2e;
+}
+
+.dashboard-header .subtitle {
+    color: #6c757d;
+    font-size: 1rem;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
+}
+
+.charts-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 24px;
+}
+
+.chart-card {
+    background-color: #ffffff;
+    border: 1px solid #dee2e6;
+    border-radius: 8px;
+    padding: 20px;
+}
+
+.chart-card h2 {
+    font-size: 1.1rem;
+    margin-bottom: 16px;
+    color: #343a40;
+}
+
+.full-width {
+    width: 100%;
+}
+
+.half-width {
+    flex: 1 1 calc(50% - 12px);
+    min-width: 300px;
+}
+
+.chart-wrapper {
+    position: relative;
+    height: 320px;
+    width: 100%;
+}
