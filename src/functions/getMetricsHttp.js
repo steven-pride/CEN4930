@@ -74,7 +74,7 @@ const MOCK_THROUGHPUT_PER_DOLLAR = [
 app.http('getLatencyMetricsHttp', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    route: 'metrics/latency',
+    route: 'api/metrics/latency',
     handler: async (request, context) => {
         const modelId = request.query.get('modelId');
         context.log('Handling GET /api/metrics/latency', { modelId });
@@ -91,7 +91,7 @@ app.http('getLatencyMetricsHttp', {
 app.http('getThroughputMetricsHttp', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    route: 'metrics/throughput',
+    route: 'api/metrics/throughput',
     handler: async (request, context) => {
         const modelId = request.query.get('modelId');
         context.log('Handling GET /api/metrics/throughput', { modelId });
@@ -108,7 +108,7 @@ app.http('getThroughputMetricsHttp', {
 app.http('getThroughputPerDollarMetricsHttp', {
     methods: ['GET'],
     authLevel: 'anonymous',
-    route: 'metrics/throughput-per-dollar',
+    route: 'api/metrics/throughput-per-dollar',
     handler: async (request, context) => {
         context.log('Handling GET /api/metrics/throughput-per-dollar');
 
