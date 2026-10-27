@@ -122,6 +122,57 @@ async function cleanOldMeasurements(retentionDays = config.db.retentionDays || 1
     return deletedCount;
 }
 
+// Fetch all available models for dropdown selection
+async function getModels() {
+    const pool = await getPool();
+    const result = await pool.request().query('SELECT ModelID, DisplayName FROM dbo.Models ORDER BY DisplayName');
+    return result.recordset;
+}
+
+// Fetch latency time-series metrics from vw_LatencyOverTime
+async function getLatencyMetrics(modelId) {
+    const pool = await getPool();
+    const req = pool.request();
+    let query = 'SELECT * FROM dbo.vw_LatencyOverTime';
+    if (modelId) {
+        req.input('ModelID', sql.VarChar(100), modelId);
+        query += ' WHERE ModelID = @ModelID';
+    }
+    query += ' ORDER BY TimeBucket ASC';
+    const result = await req.query(query);
+    return result.recordset;
+}
+
+// Fetch average throughput metrics from vw_AverageThroughputByModel
+async function getThroughputMetrics(modelId) {
+    const pool = await getPool();
+    const req = pool.request();
+    let query = 'SELECT * FROM dbo.vw_AverageThroughputByModel';
+    if (modelId) {
+        req.input('ModelID', sql.VarChar(100), modelId);
+        query += ' WHERE ModelID = @ModelID';
+    }
+    const result = await req.query(query);
+    return result.recordset;
+}
+
+// Fetch throughput per dollar metrics from vw_ThroughputPerDollar
+async function getThroughputPerDollarMetrics(modelId) {
+    const pool = await getPool();
+    const req = pool.request();
+    let query = `
+        SELECT * 
+        FROM dbo.vw_ThroughputPerDollar 
+        WHERE BlendedCostPerMillion IS NOT NULL AND ThroughputTPS IS NOT NULL
+    `;
+    if (modelId) {
+        req.input('ModelID', sql.VarChar(100), modelId);
+        query += ' AND ModelID = @ModelID';
+    }
+    const result = await req.query(query);
+    return result.recordset;
+}
+
 async function closePool() {
     const pool = await getPool();
     await pool.close();
@@ -131,5 +182,9 @@ module.exports = {
     syncModelsAndProviders,
     saveMeasurements,
     cleanOldMeasurements,
+    getModels,
+    getLatencyMetrics,
+    getThroughputMetrics,
+    getThroughputPerDollarMetrics,
     closePool,
 };
