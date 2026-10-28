@@ -1,121 +1,112 @@
 const { app } = require('@azure/functions');
+const {
+    getModels,
+    getLatencyMetrics,
+    getThroughputMetrics,
+    getThroughputPerDollarMetrics
+} = require('../db/dataAccessLayer');
 
-// Sample mock metrics data for scaffolding
-const MOCK_LATENCY = [
-    {
-        ModelID: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-        DisplayName: 'Llama 3.1 8B Instruct',
-        ProviderID: 'together',
-        ProviderName: 'Together AI',
-        TimeBucket: '2026-10-18T12:00:00.000Z',
-        AvgLatencyMs: 245.5,
-        MinLatencyMs: 210.0,
-        MaxLatencyMs: 310.2,
-        SampleCount: 12
-    },
-    {
-        ModelID: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-        DisplayName: 'Llama 3.1 8B Instruct',
-        ProviderID: 'groq',
-        ProviderName: 'Groq',
-        TimeBucket: '2026-10-18T12:00:00.000Z',
-        AvgLatencyMs: 120.4,
-        MinLatencyMs: 95.0,
-        MaxLatencyMs: 150.0,
-        SampleCount: 12
+// Common response headers including CORS
+const DEFAULT_HEADERS = {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*'
+};
+
+// GET /api/models - Returns list of models for dropdown selection
+app.http('getModelsHttp', {
+    methods: ['GET'],
+    authLevel: 'anonymous',
+    route: 'api/models',
+    handler: async (request, context) => {
+        try {
+            const data = await getModels();
+            return {
+                status: 200,
+                headers: DEFAULT_HEADERS,
+                jsonBody: data
+            };
+        } catch (err) {
+            context.error('Error fetching models:', err);
+            return {
+                status: 500,
+                headers: DEFAULT_HEADERS,
+                jsonBody: { error: err.message }
+            };
+        }
     }
-];
+});
 
-const MOCK_THROUGHPUT = [
-    {
-        ModelID: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-        DisplayName: 'Llama 3.1 8B Instruct',
-        ProviderID: 'groq',
-        ProviderName: 'Groq',
-        AvgThroughputTPS: 285.4,
-        MinThroughputTPS: 260.0,
-        MaxThroughputTPS: 310.0,
-        SampleCount: 48
-    },
-    {
-        ModelID: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-        DisplayName: 'Llama 3.1 8B Instruct',
-        ProviderID: 'together',
-        ProviderName: 'Together AI',
-        AvgThroughputTPS: 142.1,
-        MinThroughputTPS: 130.5,
-        MaxThroughputTPS: 155.0,
-        SampleCount: 48
-    }
-];
-
-const MOCK_THROUGHPUT_PER_DOLLAR = [
-    {
-        ModelID: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-        DisplayName: 'Llama 3.1 8B Instruct',
-        ProviderID: 'together',
-        ProviderName: 'Together AI',
-        BlendedCostPerMillion: 0.20,
-        ThroughputTPS: 142.1,
-        TPSPerDollar: 710.5
-    },
-    {
-        ModelID: 'meta-llama/Meta-Llama-3.1-8B-Instruct',
-        DisplayName: 'Llama 3.1 8B Instruct',
-        ProviderID: 'groq',
-        ProviderName: 'Groq',
-        BlendedCostPerMillion: 0.08,
-        ThroughputTPS: 285.4,
-        TPSPerDollar: 3567.5
-    }
-];
-
-// GET latency metrics
+// GET /api/metrics/latency - Latency time-series data
 app.http('getLatencyMetricsHttp', {
     methods: ['GET'],
     authLevel: 'anonymous',
     route: 'api/metrics/latency',
     handler: async (request, context) => {
-        const modelId = request.query.get('modelId');
-        context.log('Handling GET /api/metrics/latency', { modelId });
-
-        return {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-            jsonBody: MOCK_LATENCY
-        };
+        try {
+            const modelId = request.query.get('modelId');
+            const data = await getLatencyMetrics(modelId);
+            return {
+                status: 200,
+                headers: DEFAULT_HEADERS,
+                jsonBody: data
+            };
+        } catch (err) {
+            context.error('Error fetching latency metrics:', err);
+            return {
+                status: 500,
+                headers: DEFAULT_HEADERS,
+                jsonBody: { error: err.message }
+            };
+        }
     }
 });
 
-// GET throughput metrics
+// GET /api/metrics/throughput - Averaged throughput comparisons
 app.http('getThroughputMetricsHttp', {
     methods: ['GET'],
     authLevel: 'anonymous',
     route: 'api/metrics/throughput',
     handler: async (request, context) => {
-        const modelId = request.query.get('modelId');
-        context.log('Handling GET /api/metrics/throughput', { modelId });
-
-        return {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-            jsonBody: MOCK_THROUGHPUT
-        };
+        try {
+            const modelId = request.query.get('modelId');
+            const data = await getThroughputMetrics(modelId);
+            return {
+                status: 200,
+                headers: DEFAULT_HEADERS,
+                jsonBody: data
+            };
+        } catch (err) {
+            context.error('Error fetching throughput metrics:', err);
+            return {
+                status: 500,
+                headers: DEFAULT_HEADERS,
+                jsonBody: { error: err.message }
+            };
+        }
     }
 });
 
-// GET throughput-per-dollar metrics
+// GET /api/metrics/throughput-per-dollar - Throughput per dollar scatter plot data
 app.http('getThroughputPerDollarMetricsHttp', {
     methods: ['GET'],
     authLevel: 'anonymous',
     route: 'api/metrics/throughput-per-dollar',
     handler: async (request, context) => {
-        context.log('Handling GET /api/metrics/throughput-per-dollar');
-
-        return {
-            status: 200,
-            headers: { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' },
-            jsonBody: MOCK_THROUGHPUT_PER_DOLLAR
-        };
+        try {
+            const modelId = request.query.get('modelId');
+            const data = await getThroughputPerDollarMetrics(modelId);
+            return {
+                status: 200,
+                headers: DEFAULT_HEADERS,
+                jsonBody: data
+            };
+        } catch (err) {
+            context.error('Error fetching throughput per dollar metrics:', err);
+            return {
+                status: 500,
+                headers: DEFAULT_HEADERS,
+                jsonBody: { error: err.message }
+            };
+        }
     }
 });

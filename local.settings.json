@@ -6,5 +6,8 @@
     "HF_TOKEN": "",
     "AZURE_SQL_CONNECTION_STRING": "",
     "TIMER_SCHEDULE": "0 0 * * * *"
+  },
+  "Host": {
+    "CORS": "*"
   }
 }
