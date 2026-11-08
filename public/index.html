@@ -3,46 +3,70 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LLM Provider Benchmarks</title>
+    <title>LLM Inference Provider Benchmarks</title>
     <link rel="stylesheet" href="css/styles.css">
-    <!-- Chart.js and date adapter for time series -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chartjs-adapter-date-fns"></script>
 </head>
 <body>
-<header class="dashboard-header">
-    <h1>LLM Inference Provider Benchmarks</h1>
-    <p class="subtitle">Comparing latency, throughput (TPS), and pricing across LLM inference providers.</p>
-</header>
+<div class="dashboard-container">
+    <header class="dashboard-header">
+        <h1>LLM Inference Provider Benchmarks</h1>
+        <p class="subtitle">Empirical performance, latency, throughput, and cost analysis across inference providers</p>
+    </header>
 
-<main class="dashboard-container">
-    <!-- Charts Grid -->
-    <section class="charts-grid">
-        <!-- Chart 1: Latency Over Time -->
-        <div class="chart-card full-width">
-            <h2>1. First Response Latency Over Time</h2>
+    <section class="controls-panel">
+        <div class="control-group">
+            <label for="modelSelect">Select Model:</label>
+            <select id="modelSelect">
+                <option value="">All Models (Combined)</option>
+            </select>
+        </div>
+        <button id="refreshBtn" class="refresh-btn" type="button">Refresh Metrics</button>
+        <span id="statusIndicator" class="status-indicator">Loading metrics...</span>
+    </section>
+
+    <main class="charts-grid">
+        <!-- Chart 1: Latency Over Time (Full Width Line Chart) -->
+        <section class="chart-card full-width">
+            <div class="card-header">
+                <h2>First Response Latency Over Time</h2>
+                <span class="unit-badge">Milliseconds (ms)</span>
+            </div>
+            <p class="chart-description">Time to first response token across polling intervals by provider.</p>
             <div class="chart-wrapper">
                 <canvas id="latencyChart"></canvas>
             </div>
-        </div>
+        </section>
 
-        <!-- Chart 2: Averaged Throughput (TPS) -->
-        <div class="chart-card half-width">
-            <h2>2. Averaged Throughput (TPS)</h2>
+        <!-- Chart 2: Averaged Throughput (Horizontal Bar Chart) -->
+        <section class="chart-card half-width">
+            <div class="card-header">
+                <h2>Average Throughput by Provider</h2>
+                <span class="unit-badge">Tokens / Second (TPS)</span>
+            </div>
+            <p class="chart-description">Averaged generation speed (TPS) per provider for the selected model.</p>
             <div class="chart-wrapper">
                 <canvas id="throughputChart"></canvas>
             </div>
-        </div>
+        </section>
 
-        <!-- Chart 3: Throughput per Dollar -->
-        <div class="chart-card half-width">
-            <h2>3. Throughput per Dollar (Cost Efficiency)</h2>
+        <!-- Chart 3: Throughput per Dollar (Scatter Plot) -->
+        <section class="chart-card half-width">
+            <div class="card-header">
+                <h2>Throughput per Dollar (Cost Efficiency)</h2>
+                <span class="unit-badge">TPS vs. $/1M Tokens</span>
+            </div>
+            <p class="chart-description">Generation speed relative to blended token cost per provider.</p>
             <div class="chart-wrapper">
                 <canvas id="scatterChart"></canvas>
             </div>
-        </div>
-    </section>
-</main>
+        </section>
+    </main>
+
+    <footer class="dashboard-footer">
+        <p>CEN4930 Independent API Project &bull; Data collected from Hugging Face Hub API</p>
+    </footer>
+</div>
 
 <script src="js/app.js"></script>
 </body>
