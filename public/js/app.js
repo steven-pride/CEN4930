@@ -91,7 +91,7 @@ async function loadDashboard(modelId = '') {
         const [latencyRes, throughputRes, scatterRes] = await Promise.all([
             fetch(`/api/metrics/latency${queryParam}`).catch(() => null),
             fetch(`/api/metrics/throughput${queryParam}`).catch(() => null),
-            fetch(`/api/metrics/throughput-per-dollar${queryParam}`).catch(() => null)
+            fetch('/api/metrics/throughput-per-dollar').catch(() => null)
         ]);
 
         if (latencyRes && latencyRes.ok) latencyData = await latencyRes.json();

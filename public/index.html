@@ -14,51 +14,56 @@
         <p class="subtitle">Empirical performance, latency, throughput, and cost analysis across inference providers</p>
     </header>
 
-    <section class="controls-panel">
-        <div class="control-group">
-            <label for="modelSelect">Select Model:</label>
-            <select id="modelSelect">
-                <option value="">All Models (Combined)</option>
-            </select>
-        </div>
-        <button id="refreshBtn" class="refresh-btn" type="button">Refresh Metrics</button>
-        <span id="statusIndicator" class="status-indicator">Loading metrics...</span>
-    </section>
-
-    <main class="charts-grid">
-        <!-- Chart 1: Latency Over Time (Full Width Line Chart) -->
-        <section class="chart-card full-width">
-            <div class="card-header">
-                <h2>First Response Latency Over Time</h2>
-                <span class="unit-badge">Milliseconds (ms)</span>
-            </div>
-            <p class="chart-description">Time to first response token across polling intervals by provider.</p>
-            <div class="chart-wrapper">
-                <canvas id="latencyChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Chart 2: Averaged Throughput (Horizontal Bar Chart) -->
-        <section class="chart-card half-width">
-            <div class="card-header">
-                <h2>Average Throughput by Provider</h2>
-                <span class="unit-badge">Tokens / Second (TPS)</span>
-            </div>
-            <p class="chart-description">Averaged generation speed (TPS) per provider for the selected model.</p>
-            <div class="chart-wrapper">
-                <canvas id="throughputChart"></canvas>
-            </div>
-        </section>
-
-        <!-- Chart 3: Throughput per Dollar (Scatter Plot) -->
-        <section class="chart-card half-width">
+    <main class="dashboard-content">
+        <!-- Global Chart: Throughput per Dollar (Cost Efficiency Scatter Plot) -->
+        <section class="chart-card full-width global-chart-card">
             <div class="card-header">
                 <h2>Throughput per Dollar (Cost Efficiency)</h2>
                 <span class="unit-badge">TPS vs. $/1M Tokens</span>
             </div>
-            <p class="chart-description">Generation speed relative to blended token cost per provider.</p>
+            <p class="chart-description">Generation speed relative to blended token cost across all models and providers.</p>
             <div class="chart-wrapper">
                 <canvas id="scatterChart"></canvas>
+            </div>
+        </section>
+
+        <!-- Model-Driven Performance Section (Grouped Container) -->
+        <section class="model-group-container">
+            <div class="controls-panel">
+                <div class="control-group">
+                    <label for="modelSelect">Select Model:</label>
+                    <select id="modelSelect">
+                        <option value="">All Models (Combined)</option>
+                    </select>
+                </div>
+                <button id="refreshBtn" class="refresh-btn" type="button">Refresh Metrics</button>
+                <span id="statusIndicator" class="status-indicator">Loading metrics...</span>
+            </div>
+
+            <div class="model-charts-grid">
+                <!-- Chart 1: Latency Over Time (Full Width Line Chart) -->
+                <section class="chart-card full-width">
+                    <div class="card-header">
+                        <h2>First Response Latency Over Time</h2>
+                        <span class="unit-badge">Milliseconds (ms)</span>
+                    </div>
+                    <p class="chart-description">Time to first response token across polling intervals by provider for the selected model.</p>
+                    <div class="chart-wrapper">
+                        <canvas id="latencyChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Chart 2: Averaged Throughput (Full Width Horizontal Bar Chart) -->
+                <section class="chart-card full-width">
+                    <div class="card-header">
+                        <h2>Average Throughput by Provider</h2>
+                        <span class="unit-badge">Tokens / Second (TPS)</span>
+                    </div>
+                    <p class="chart-description">Averaged generation speed (TPS) per provider for the selected model.</p>
+                    <div class="chart-wrapper">
+                        <canvas id="throughputChart"></canvas>
+                    </div>
+                </section>
             </div>
         </section>
     </main>
