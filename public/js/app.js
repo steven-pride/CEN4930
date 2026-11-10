@@ -217,15 +217,67 @@ function renderThroughputChart(data) {
         return;
     }
 
-    // Sort by average throughput descending
-    const sortedData = [...data].sort((a, b) => {
-        const valA = Number(a.AvgThroughputTPS ?? a.ThroughputTPS ?? 0);
-        const valB = Number(b.AvgThroughputTPS ?? b.ThroughputTPS ?? 0);
-        return valB - valA;
+    // Group observations by provider to compute overall provider averages and keep model breakdowns
+    const providerMap = {};
+    data.forEach((item) => {
+        const provider = item.ProviderName || item.ProviderID || 'Unknown';
+        const model = item.DisplayName || item.ModelDisplayName || item.ModelID || 'Unknown Model';
+        const tps = Number(item.AvgThroughputTPS ?? item.ThroughputTPS ?? 0);
+        const cost = item.BlendedCostPerMillion != null ? Number(item.BlendedCostPerMillion) : null;
+
+        if (!providerMap[provider]) {
+            providerMap[provider] = {
+                providerName: provider,
+                modelMap: {},
+                totalTps: 0,
+                count: 0
+            };
+        }
+
+        // Aggregate per model under provider if multiple observations exist
+        if (!providerMap[provider].modelMap[model]) {
+            providerMap[provider].modelMap[model] = {
+                model,
+                tpsSum: 0,
+                count: 0,
+                cost
+            };
+        }
+
+        providerMap[provider].modelMap[model].tpsSum += tps;
+        providerMap[provider].modelMap[model].count += 1;
+        if (cost !== null) {
+            providerMap[provider].modelMap[model].cost = cost;
+        }
+
+        providerMap[provider].totalTps += tps;
+        providerMap[provider].count += 1;
     });
 
-    const labels = sortedData.map((d) => d.ProviderName || d.ProviderID || d.DisplayName || 'Unknown');
-    const values = sortedData.map((d) => Number(d.AvgThroughputTPS ?? d.ThroughputTPS ?? 0));
+    const providersList = Object.keys(providerMap).map((providerKey) => {
+        const p = providerMap[providerKey];
+        const overallAvgTps = p.count > 0 ? p.totalTps / p.count : 0;
+        const models = Object.keys(p.modelMap).map((mKey) => {
+            const m = p.modelMap[mKey];
+            return {
+                model: m.model,
+                tps: m.count > 0 ? m.tpsSum / m.count : 0,
+                cost: m.cost
+            };
+        }).sort((a, b) => b.tps - a.tps);
+
+        return {
+            providerName: p.providerName,
+            overallAvgTps,
+            models
+        };
+    });
+
+    // Sort providers by overall average throughput descending
+    const sortedProviders = providersList.sort((a, b) => b.overallAvgTps - a.overallAvgTps);
+
+    const labels = sortedProviders.map((p) => p.providerName);
+    const values = sortedProviders.map((p) => p.overallAvgTps);
     const colors = labels.map((label) => getProviderColor(label));
 
     const ctx = canvas.getContext('2d');
@@ -248,7 +300,27 @@ function renderThroughputChart(data) {
                 legend: { display: false },
                 tooltip: {
                     callbacks: {
-                        label: (ctx) => ` ${ctx.parsed.x.toFixed(1)} TPS`
+                        title: (items) => {
+                            if (!items || !items.length) return '';
+                            return items[0].label;
+                        },
+                        label: (ctx) => {
+                            const providerObj = sortedProviders[ctx.dataIndex];
+                            const tps = providerObj ? providerObj.overallAvgTps : ctx.parsed.x;
+                            return ` Overall: ${tps.toFixed(1)} TPS`;
+                        },
+                        afterBody: (items) => {
+                            if (!items || !items.length) return [];
+                            const providerObj = sortedProviders[items[0].dataIndex];
+                            if (!providerObj || !providerObj.models || providerObj.models.length === 0) return [];
+
+                            const lines = ['─────────────────────────────'];
+                            providerObj.models.forEach((m) => {
+                                const costText = m.cost != null ? ` ($${m.cost.toFixed(2)}/1M)` : '';
+                                lines.push(`\u2022 ${m.model}: ${m.tps.toFixed(1)} TPS${costText}`);
+                            });
+                            return lines;
+                        }
                     }
                 }
             },
@@ -266,7 +338,7 @@ function renderThroughputChart(data) {
     });
 }
 
-// Chart 3: Throughput per Dollar (Scatter Plot)
+// Chart 3: Throughput per Dollar (Scatter Plot with Aggregated Points and Range Whiskers)
 function renderScatterChart(data) {
     const canvas = document.getElementById('scatterChart');
     if (!canvas) return;
@@ -280,22 +352,50 @@ function renderScatterChart(data) {
         return;
     }
 
-    // Group scatter points by provider
-    const providerMap = {};
+    // Aggregate observations by (Provider, Model) pair to eliminate vertical smearing
+    const pairMap = {};
     data.forEach((item) => {
         const provider = item.ProviderName || item.ProviderID || 'Unknown';
+        const modelName = item.DisplayName || item.ModelDisplayName || item.ModelID || 'Unknown Model';
         const cost = Number(item.BlendedCostPerMillion ?? item.PromptCostPerMillion ?? item.cost ?? 0);
         const tps = Number(item.ThroughputTPS ?? item.AvgThroughputTPS ?? item.throughput ?? 0);
-        const modelName = item.DisplayName || item.ModelID || '';
 
-        if (!providerMap[provider]) {
-            providerMap[provider] = [];
+        const pairKey = `${provider}:::${modelName}`;
+        if (!pairMap[pairKey]) {
+            pairMap[pairKey] = {
+                provider,
+                modelName,
+                cost,
+                tpsList: []
+            };
         }
 
-        providerMap[provider].push({
-            x: cost,
-            y: tps,
-            model: modelName
+        pairMap[pairKey].tpsList.push(tps);
+        if (cost > 0) {
+            pairMap[pairKey].cost = cost;
+        }
+    });
+
+    // Group aggregated points by provider for dataset coloring and legend
+    const providerMap = {};
+    Object.values(pairMap).forEach((pair) => {
+        const tpsList = pair.tpsList;
+        const count = tpsList.length;
+        const meanTps = count > 0 ? tpsList.reduce((sum, v) => sum + v, 0) / count : 0;
+        const minTps = Math.min(...tpsList);
+        const maxTps = Math.max(...tpsList);
+
+        if (!providerMap[pair.provider]) {
+            providerMap[pair.provider] = [];
+        }
+
+        providerMap[pair.provider].push({
+            x: pair.cost,
+            y: meanTps,
+            model: pair.modelName,
+            minTps,
+            maxTps,
+            count
         });
     });
 
@@ -307,14 +407,56 @@ function renderScatterChart(data) {
             backgroundColor: color,
             borderColor: color,
             pointRadius: 6,
-            pointHoverRadius: 8
+            pointHoverRadius: 9
         };
     });
+
+    // Custom plugin to render vertical range whiskers (min to max TPS) per aggregated point
+    const rangeWhiskersPlugin = {
+        id: 'rangeWhiskers',
+        afterDatasetsDraw(chart) {
+            const ctx = chart.ctx;
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                const meta = chart.getDatasetMeta(datasetIndex);
+                if (meta.hidden) return;
+                const color = dataset.borderColor || '#64748b';
+
+                dataset.data.forEach((point, pointIndex) => {
+                    if (point.minTps == null || point.maxTps == null || point.minTps === point.maxTps) {
+                        return;
+                    }
+                    const pointElement = meta.data[pointIndex];
+                    if (!pointElement) return;
+
+                    const xPixel = pointElement.x;
+                    const yMinPixel = chart.scales.y.getPixelForValue(point.minTps);
+                    const yMaxPixel = chart.scales.y.getPixelForValue(point.maxTps);
+
+                    ctx.save();
+                    ctx.strokeStyle = color;
+                    ctx.lineWidth = 1.5;
+                    ctx.beginPath();
+                    // Vertical range line
+                    ctx.moveTo(xPixel, yMinPixel);
+                    ctx.lineTo(xPixel, yMaxPixel);
+                    // Top whisker cap
+                    ctx.moveTo(xPixel - 4, yMaxPixel);
+                    ctx.lineTo(xPixel + 4, yMaxPixel);
+                    // Bottom whisker cap
+                    ctx.moveTo(xPixel - 4, yMinPixel);
+                    ctx.lineTo(xPixel + 4, yMinPixel);
+                    ctx.stroke();
+                    ctx.restore();
+                });
+            });
+        }
+    };
 
     const ctx = canvas.getContext('2d');
     scatterChartInstance = new Chart(ctx, {
         type: 'scatter',
         data: { datasets },
+        plugins: [rangeWhiskersPlugin],
         options: {
             responsive: true,
             maintainAspectRatio: false,
@@ -322,10 +464,23 @@ function renderScatterChart(data) {
                 legend: { position: 'top' },
                 tooltip: {
                     callbacks: {
+                        title: (items) => {
+                            if (!items || !items.length) return '';
+                            const raw = items[0].raw || {};
+                            return `${raw.model || 'Model'} (${items[0].dataset.label})`;
+                        },
                         label: (ctx) => {
                             const raw = ctx.raw || {};
-                            const modelLabel = raw.model ? ` (${raw.model})` : '';
-                            return ` ${ctx.dataset.label}${modelLabel}: $${raw.x?.toFixed(2)}/1M tok, ${raw.y?.toFixed(1)} TPS`;
+                            const lines = [
+                                ` Cost: $${raw.x?.toFixed(2)}/1M tokens`,
+                                ` Avg Throughput: ${raw.y?.toFixed(1)} TPS`
+                            ];
+                            if (raw.minTps != null && raw.maxTps != null && raw.minTps !== raw.maxTps) {
+                                lines.push(` Range: ${raw.minTps.toFixed(1)} - ${raw.maxTps.toFixed(1)} TPS (${raw.count} samples)`);
+                            } else if (raw.count > 1) {
+                                lines.push(` Sample Count: ${raw.count}`);
+                            }
+                            return lines;
                         }
                     }
                 }
