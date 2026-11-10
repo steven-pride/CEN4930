@@ -6,9 +6,15 @@
 
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    background-color: #f8f9fa;
+    background-color: #f4f6f9;
     color: #212529;
-    padding: 20px;
+    padding: 24px 16px;
+    line-height: 1.5;
+}
+
+.dashboard-container {
+    max-width: 1200px;
+    margin: 0 auto;
 }
 
 .dashboard-header {
@@ -17,19 +23,83 @@ body {
 }
 
 .dashboard-header h1 {
-    font-size: 1.8rem;
-    margin-bottom: 8px;
+    font-size: 2rem;
+    font-weight: 700;
     color: #1a1a2e;
+    margin-bottom: 6px;
 }
 
 .dashboard-header .subtitle {
     color: #6c757d;
-    font-size: 1rem;
+    font-size: 1.05rem;
 }
 
-.dashboard-container {
-    max-width: 1200px;
-    margin: 0 auto;
+.controls-panel {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 14px 20px;
+    margin-bottom: 24px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.control-group {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.control-group label {
+    font-weight: 600;
+    font-size: 0.95rem;
+    color: #334155;
+}
+
+select {
+    padding: 8px 12px;
+    font-size: 0.95rem;
+    border: 1px solid #cbd5e1;
+    border-radius: 6px;
+    background-color: #ffffff;
+    color: #1e293b;
+    outline: none;
+    cursor: pointer;
+    min-width: 240px;
+}
+
+select:focus {
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+}
+
+.refresh-btn {
+    padding: 8px 16px;
+    font-size: 0.95rem;
+    font-weight: 500;
+    background-color: #2563eb;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: background-color 0.15s ease-in-out;
+}
+
+.refresh-btn:hover {
+    background-color: #1d4ed8;
+}
+
+.refresh-btn:active {
+    background-color: #1e40af;
+}
+
+.status-indicator {
+    margin-left: auto;
+    font-size: 0.88rem;
+    color: #64748b;
 }
 
 .charts-grid {
@@ -40,15 +110,10 @@ body {
 
 .chart-card {
     background-color: #ffffff;
-    border: 1px solid #dee2e6;
+    border: 1px solid #e2e8f0;
     border-radius: 8px;
     padding: 20px;
-}
-
-.chart-card h2 {
-    font-size: 1.1rem;
-    margin-bottom: 16px;
-    color: #343a40;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
 }
 
 .full-width {
@@ -57,11 +122,69 @@ body {
 
 .half-width {
     flex: 1 1 calc(50% - 12px);
-    min-width: 300px;
+    min-width: 320px;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 6px;
+}
+
+.card-header h2 {
+    font-size: 1.15rem;
+    font-weight: 600;
+    color: #1e293b;
+}
+
+.unit-badge {
+    background-color: #e2e8f0;
+    color: #475569;
+    font-size: 0.75rem;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 4px;
+    text-transform: uppercase;
+}
+
+.chart-description {
+    font-size: 0.88rem;
+    color: #64748b;
+    margin-bottom: 16px;
 }
 
 .chart-wrapper {
     position: relative;
-    height: 320px;
+    height: 340px;
     width: 100%;
+}
+
+.dashboard-footer {
+    text-align: center;
+    margin-top: 36px;
+    padding-top: 16px;
+    border-top: 1px solid #e2e8f0;
+    color: #94a3b8;
+    font-size: 0.85rem;
+}
+
+@media (max-width: 768px) {
+    .half-width {
+        flex: 1 1 100%;
+    }
+
+    .controls-panel {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .status-indicator {
+        margin-left: 0;
+        text-align: center;
+    }
+
+    .chart-wrapper {
+        height: 280px;
+    }
 }
