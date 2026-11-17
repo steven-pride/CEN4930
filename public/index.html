@@ -15,18 +15,6 @@
     </header>
 
     <main class="dashboard-content">
-        <!-- Global Chart: Throughput per Dollar (Cost Efficiency Scatter Plot) -->
-        <section class="chart-card full-width global-chart-card">
-            <div class="card-header">
-                <h2>Throughput per Dollar (Cost Efficiency)</h2>
-                <span class="unit-badge">TPS vs. $/1M Tokens</span>
-            </div>
-            <p class="chart-description">Generation speed relative to blended token cost across all models and providers.</p>
-            <div class="chart-wrapper">
-                <canvas id="scatterChart"></canvas>
-            </div>
-        </section>
-
         <!-- Model-Driven Performance Section (Grouped Container) -->
         <section class="model-group-container">
             <div class="controls-panel">
@@ -62,6 +50,18 @@
                     <p class="chart-description">Averaged generation speed (TPS) per provider for the selected model.</p>
                     <div class="chart-wrapper">
                         <canvas id="throughputChart"></canvas>
+                    </div>
+                </section>
+
+                <!-- Chart 3: Throughput per Dollar (Cost Efficiency Scatter Plot) -->
+                <section class="chart-card full-width">
+                    <div class="card-header">
+                        <h2>Throughput per Dollar (Cost Efficiency)</h2>
+                        <span class="unit-badge">TPS vs. $/1M Tokens</span>
+                    </div>
+                    <p class="chart-description">Generation speed relative to blended token cost across providers for the selected model.</p>
+                    <div class="chart-wrapper">
+                        <canvas id="scatterChart"></canvas>
                     </div>
                 </section>
             </div>
